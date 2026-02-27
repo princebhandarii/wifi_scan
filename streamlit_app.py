@@ -297,7 +297,14 @@ if analyze_clicked:
     else:
         try:
             raw = uploaded_file.getvalue()
-            networks = json.loads(raw.decode("utf-8"))
+            # Auto-detect encoding: UTF-16 files start with BOM bytes 0xFF 0xFE or 0xFE 0xFF
+            if raw[:2] in (b'\xff\xfe', b'\xfe\xff'):
+                text = raw.decode("utf-16")
+            elif raw[:3] == b'\xef\xbb\xbf':
+                text = raw.decode("utf-8-sig")  # UTF-8 with BOM
+            else:
+                text = raw.decode("utf-8")
+            networks = json.loads(text)
         except Exception as e:
             st.markdown(f'<div class="alert-box">❌ Invalid JSON: {e}</div>', unsafe_allow_html=True)
             st.stop()
